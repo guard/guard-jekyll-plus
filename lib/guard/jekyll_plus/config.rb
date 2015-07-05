@@ -1,5 +1,21 @@
 require 'jekyll'
 
+# Workaround for issue:
+# 1. Bundler's require mechanism is not used in Guard (should be)
+# 2. This file is alone included from the Guardfile
+# 3. The Guard::JekyllPlus::Config class is defined ...
+# 4. ... but this means Guard::JekyllPlus is also defined
+# 5. Guard detects that Guard::JekyllPlus is defined
+# 6. Guard considers Guard::JekyllPlus loaded, so ...
+# 7. Guard::JekyllPlus has no methods (run_on_modifications, etc.)
+# 8. Since Guard::JekyllPlus has no methods, nothing happens when files change
+#
+# So, detect if this file was loaded from the Guardfile and load the real, full
+# Guard::JekyllPlus class if it hasn't been loaded already
+unless defined?(Guard::JekyllPlus)
+  require 'guard/jekyll_plus'
+end
+
 module Guard
   class JekyllPlus < Plugin
     class Config
