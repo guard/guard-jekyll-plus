@@ -1,4 +1,6 @@
 require 'guard/jekyll_plus/builder/action'
+require 'guard/jekyll_plus/config'
+
 module Guard
   RSpec.describe JekyllPlus::Builder::Action do
     let(:site) { instance_double(Jekyll::Site) }

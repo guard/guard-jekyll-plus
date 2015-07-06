@@ -4,14 +4,13 @@ require 'benchmark'
 require 'jekyll'
 require 'guard/compat/plugin'
 
-require 'guard/jekyll_plus/config'
-
 module Guard
   class JekyllPlus < Plugin
     class Builder
       class Action
         def initialize(config, site)
-          @config, @site = config, site
+          @config = config
+          @site = site
         end
 
         def jekyll_matches(paths)

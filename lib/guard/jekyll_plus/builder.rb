@@ -1,11 +1,4 @@
-require 'jekyll'
-
-require 'guard/jekyll_plus/config'
-
-require 'guard/jekyll_plus/builder/modifier'
-require 'guard/jekyll_plus/builder/adder'
-require 'guard/jekyll_plus/builder/remover'
-require 'guard/jekyll_plus/builder/rebuilder'
+require 'guard/jekyll_plus'
 
 module Guard
   class JekyllPlus < Plugin

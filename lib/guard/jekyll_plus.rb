@@ -6,10 +6,6 @@ require 'jekyll'
 
 require 'guard/compat/plugin'
 
-require 'guard/jekyll_plus/server'
-require 'guard/jekyll_plus/config'
-require 'guard/jekyll_plus/builder'
-
 module Guard
   class JekyllPlus < Plugin
     def initialize(options = {})
@@ -57,3 +53,15 @@ module Guard
     end
   end
 end
+
+# At the end, or we'll get a circular dependency with this file
+require 'guard/jekyll_plus/config'
+
+# At the end, since these require this file
+require 'guard/jekyll_plus/server'
+require 'guard/jekyll_plus/builder'
+require 'guard/jekyll_plus/builder/action'
+require 'guard/jekyll_plus/builder/modifier'
+require 'guard/jekyll_plus/builder/adder'
+require 'guard/jekyll_plus/builder/remover'
+require 'guard/jekyll_plus/builder/rebuilder'

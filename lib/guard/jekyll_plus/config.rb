@@ -12,9 +12,7 @@ require 'jekyll'
 #
 # So, detect if this file was loaded from the Guardfile and load the real, full
 # Guard::JekyllPlus class if it hasn't been loaded already
-unless defined?(Guard::JekyllPlus)
-  require 'guard/jekyll_plus'
-end
+require 'guard/jekyll_plus' unless defined?(Guard::JekyllPlus)
 
 module Guard
   class JekyllPlus < Plugin

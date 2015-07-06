@@ -2,7 +2,7 @@ require 'jekyll'
 
 require 'guard/compat/plugin'
 
-require 'guard/jekyll_plus/config'
+require 'guard/jekyll_plus'
 
 module Guard
   class JekyllPlus < Plugin

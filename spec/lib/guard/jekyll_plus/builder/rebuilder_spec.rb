@@ -1,4 +1,5 @@
 require 'guard/jekyll_plus/builder/rebuilder'
+require 'guard/jekyll_plus/config'
 
 module Guard
   RSpec.describe JekyllPlus::Builder::Rebuilder do

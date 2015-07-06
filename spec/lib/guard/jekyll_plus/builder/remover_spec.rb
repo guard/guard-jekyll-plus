@@ -1,4 +1,5 @@
 require 'guard/jekyll_plus/builder/remover'
+require 'guard/jekyll_plus/config'
 
 module Guard
   RSpec.describe JekyllPlus::Builder::Remover do
