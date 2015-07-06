@@ -137,8 +137,25 @@ RSpec.describe Guard::JekyllPlus::Config do
   end
 
   describe '#watch_regexp' do
+    before do
+      allow(File).to receive(:realpath) do |*args|
+        fail "stub me: File.realpath(#{args.map(&:inspect) * ', '})"
+      end
+
+      { '.' => '/my/prj',
+        'src' => '/my/prj/src',
+        'public' => '/my/prj/public',
+        'a/src' => '/my/prj/a/src',
+        'a/src/b/public' => '/my/prj/a/src/b/public',
+        'a/public/b/src' => '/my/prj/a/public/b/src',
+        'a/public' => '/my/prj/a/public'
+      }.each do |path, realpath|
+        allow(File).to receive(:realpath).with(path).and_return(realpath)
+      end
+    end
+
     context 'with a destination' do
-      context 'when the source is root' do
+      context 'when the source contains destination' do
         let(:jekyll_config) do
           valid_jekyll_options.merge(
             'destination' => 'public',
@@ -146,7 +163,7 @@ RSpec.describe Guard::JekyllPlus::Config do
           )
         end
 
-        it 'matches files outside destination' do
+        it 'matches source files outside destination' do
           expect(subject.watch_regexp).to match('foo')
           expect(subject.watch_regexp).to match('foo/bar')
           expect(subject.watch_regexp).to match('foo/public/bar')
@@ -159,9 +176,47 @@ RSpec.describe Guard::JekyllPlus::Config do
           expect(subject.watch_regexp).to_not match('public/foo/bar')
           expect(subject.watch_regexp).to_not match('public/foo/public')
         end
+
+        context 'when the paths are complex' do
+          let(:options) { { config: ['_config.yml', 'foobar/_config.yml'] } }
+          let(:jekyll_config) do
+            valid_jekyll_options.merge(
+              'destination' => 'a/src/b/public',
+              'source' => 'a/src'
+            )
+          end
+
+          it 'matches src files not in destination' do
+            expect(subject.watch_regexp).to match('a/src/foo')
+            expect(subject.watch_regexp).to match('a/src/bar')
+            expect(subject.watch_regexp).to match('a/src/b/foo')
+            expect(subject.watch_regexp).to match('a/src/b/foo/bar')
+            expect(subject.watch_regexp).to match('a/src/b/publics')
+            expect(subject.watch_regexp).to match('a/src/b/publics/bar')
+          end
+
+          it 'does not match files in destination' do
+            expect(subject.watch_regexp).to_not match('a/src/b/public/foo')
+            expect(subject.watch_regexp).to_not match('a/src/b/public/foo/bar')
+            expect(subject.watch_regexp)
+              .to_not match('a/src/b/public/foo/public')
+          end
+
+          it 'does not match files outside src dir' do
+            expect(subject.watch_regexp).to_not match('foo')
+            expect(subject.watch_regexp).to_not match('a/foo')
+            expect(subject.watch_regexp).to_not match('a/srcs')
+            expect(subject.watch_regexp).to_not match('a/srcs/foo')
+          end
+
+          it 'matches config files' do
+            expect(subject.watch_regexp).to match('_config.yml')
+            expect(subject.watch_regexp).to match('foobar/_config.yml')
+          end
+        end
       end
 
-      context 'when the source is not root' do
+      context 'when the source and destination are independent' do
         let(:jekyll_config) do
           valid_jekyll_options.merge(
             'destination' => 'public',
@@ -201,6 +256,22 @@ RSpec.describe Guard::JekyllPlus::Config do
             expect(subject.watch_regexp).to match('_config.yml')
             expect(subject.watch_regexp).to match('foobar/_config.yml')
           end
+        end
+      end
+
+      context 'when the destination contains src' do
+        let(:jekyll_config) do
+          valid_jekyll_options.merge(
+            'destination' => 'a/public',
+            'source' => 'a/public/b/src'
+          )
+        end
+
+        it 'aborts' do
+          expect { subject.watch_regexp }.to raise_error(
+            Guard::JekyllPlus::Config::TerribleConfiguration,
+            'Fatal: source directory is inside destination directory!'
+          )
         end
       end
     end

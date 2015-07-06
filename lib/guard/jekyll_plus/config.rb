@@ -19,6 +19,9 @@ module Guard
     class Config
       EXTS = %w(md mkd mkdn markdown textile html haml slim xml yml sass scss)
 
+      class TerribleConfiguration < RuntimeError
+      end
+
       def initialize(options)
         @options = {
           extensions: [],
@@ -106,12 +109,37 @@ module Guard
       end
 
       def watch_regexp
-        return %r{^(?!#{destination}/).*} if source == '.'
-        quoted_configs = config_files.map { |file| Regexp.quote(file) }
-        %r{^(#{source}/.*$|#{quoted_configs.join('$|')}$)}
+        if destination_includes_source?
+          fail(
+            TerribleConfiguration,
+            'Fatal: source directory is inside destination directory!')
+        end
+
+        add_configs_to_regexp(source_and_dest_pattern)
       end
 
       private
+
+      def source_and_dest_pattern
+        q_src = source == '.' ? '' : Regexp.quote("#{source}/")
+
+        return "#{q_src}.*" unless source_includes_destination?
+
+        q_rel_dst = Regexp.quote("#{relative_destination}/")
+        "#{q_src}(?!#{q_rel_dst}).*"
+      end
+
+      def add_configs_to_regexp(pattern)
+        quoted_configs = config_files.map { |file| Regexp.quote(file) }
+        parts = [pattern] + quoted_configs
+        /^#{parts.join('$|')}$/
+      end
+
+      def relative_destination
+        p_dst = Pathname(File.realpath(destination))
+        p_src = Pathname(File.realpath(source))
+        p_dst.relative_path_from(p_src).to_s
+      end
 
       def silent?
         @options[:silent] || @options['silent']
@@ -149,6 +177,14 @@ module Guard
         else
           path.sub(%r{^/}, '')
         end
+      end
+
+      def destination_includes_source?
+        File.realpath(source).start_with?(File.realpath(destination))
+      end
+
+      def source_includes_destination?
+        File.realpath(destination).start_with?(File.realpath(source))
       end
     end
   end
