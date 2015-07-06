@@ -55,7 +55,7 @@ module Guard
       end
 
       def config_file?(file)
-        @options[:config].include?(file)
+        config_files.include?(file)
       end
 
       def reload
@@ -106,7 +106,9 @@ module Guard
       end
 
       def watch_regexp
-        %r{^(?!#{destination}\/).*}
+        return %r{^(?!#{destination}/).*} if source == '.'
+        quoted_configs = config_files.map { |file| Regexp.quote(file) }
+        %r{^(#{source}/.*$|#{quoted_configs.join('$|')}$)}
       end
 
       private
@@ -122,6 +124,10 @@ module Guard
         config['show_drafts'] = options[:drafts]
         config['future']      = options[:future]
         config
+      end
+
+      def config_files
+        @options[:config]
       end
 
       def jekyllize_options(options)

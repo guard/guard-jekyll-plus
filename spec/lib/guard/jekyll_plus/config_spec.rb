@@ -138,22 +138,70 @@ RSpec.describe Guard::JekyllPlus::Config do
 
   describe '#watch_regexp' do
     context 'with a destination' do
-      let(:jekyll_config) do
-        valid_jekyll_options.merge('destination' => 'public')
+      context 'when the source is root' do
+        let(:jekyll_config) do
+          valid_jekyll_options.merge(
+            'destination' => 'public',
+            'source' => '.'
+          )
+        end
+
+        it 'matches files outside destination' do
+          expect(subject.watch_regexp).to match('foo')
+          expect(subject.watch_regexp).to match('foo/bar')
+          expect(subject.watch_regexp).to match('foo/public/bar')
+          expect(subject.watch_regexp).to match('foo/public')
+          expect(subject.watch_regexp).to match('publics/bar')
+        end
+
+        it 'does not match files in destination' do
+          expect(subject.watch_regexp).to_not match('public/foo')
+          expect(subject.watch_regexp).to_not match('public/foo/bar')
+          expect(subject.watch_regexp).to_not match('public/foo/public')
+        end
       end
 
-      it 'matches files outside destination' do
-        expect(subject.watch_regexp).to match('foo')
-        expect(subject.watch_regexp).to match('foo/bar')
-        expect(subject.watch_regexp).to match('foo/public/bar')
-        expect(subject.watch_regexp).to match('foo/public')
-        expect(subject.watch_regexp).to match('publics/bar')
-      end
+      context 'when the source is not root' do
+        let(:jekyll_config) do
+          valid_jekyll_options.merge(
+            'destination' => 'public',
+            'source' => 'src'
+          )
+        end
 
-      it 'does not match files in destination' do
-        expect(subject.watch_regexp).to_not match('public/foo')
-        expect(subject.watch_regexp).to_not match('public/foo/bar')
-        expect(subject.watch_regexp).to_not match('public/foo/public')
+        it 'does not match files outside source' do
+          expect(subject.watch_regexp).to_not match('foo')
+          expect(subject.watch_regexp).to_not match('foo/src')
+          expect(subject.watch_regexp).to_not match('foo/bar')
+          expect(subject.watch_regexp).to_not match('foo/public')
+          expect(subject.watch_regexp).to_not match('foo/public/bar')
+          expect(subject.watch_regexp).to_not match('foo/public/src')
+          expect(subject.watch_regexp).to_not match('publics/bar')
+          expect(subject.watch_regexp).to_not match('public/src')
+          expect(subject.watch_regexp).to_not match('public/src/bar')
+          expect(subject.watch_regexp).to_not match('public/src/public')
+        end
+
+        it 'matches files in source' do
+          expect(subject.watch_regexp).to match('src/foo')
+          expect(subject.watch_regexp).to match('src/public')
+          expect(subject.watch_regexp).to match('src/public/foo')
+        end
+
+        context 'with multiple config files' do
+          let(:jekyll_config) do
+            valid_jekyll_options
+              .merge('destination' => 'public')
+              .merge('source' => 'src')
+          end
+
+          let(:options) { { config: ['_config.yml', 'foobar/_config.yml'] } }
+
+          it 'matches config files' do
+            expect(subject.watch_regexp).to match('_config.yml')
+            expect(subject.watch_regexp).to match('foobar/_config.yml')
+          end
+        end
       end
     end
   end
