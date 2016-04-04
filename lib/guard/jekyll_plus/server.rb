@@ -86,8 +86,12 @@ module Guard
 
         @config.info "Using: #{s.server} as server"
 
-        thin = s.server == Rack::Handler::Thin
-        Thin::Logging.silent = @config.rack_environment.nil? if thin
+        # Force Thin to honor the `silent?` value
+        if Rack::Handler.const_defined?(:Thin)
+          if s.server == Rack::Handler::Thin
+            Thin::Logging.silent = @config.rack_environment.nil?
+          end
+        end
 
         @pid = Process.fork { s.start }
       end
